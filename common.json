@@ -1,0 +1,36 @@
+{
+    "Gaming": {
+        "Steam": "https://steamcdn-a.akamaihd.net/client/installer/SteamSetup.exe",
+        "Origin": "https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginThinSetup.exe",
+        "Uplay": "https://ubistatic3-a.akamaihd.net/orbit/launcher_installer/UplayInstaller.exe",
+        "BattleNet": "https://eu.battle.net/download/getInstaller?os=win&installer=Battle.net-Setup.exe"
+    },
+    "Communication": {
+        "Discord": "https://discordapp.com/api/download?platform=win", 
+        "TeamSpeak": "http://dl.4players.de/ts/releases/3.1.10/TeamSpeak3-Client-win64-3.1.10.exe",
+        "Mumble": "http://download.mumble.com/en/mumble-1.2.19.msi",
+        "Skype": "https://go.skype.com/skype.download"
+    },
+    "Browsers": {
+        "Firefox": "https://download-installer.cdn.mozilla.net/pub/firefox/releases/61.0.1/win64/en-US/Firefox%20Setup%2061.0.1.exe",
+        "Opera": "https://www.opera.com/sv/computer/thanks?ni=stable&os=win"
+    },
+    "Monitoring": {
+        "HWMonitor": "http://download.cpuid.com/hwmonitor/hwmonitor_1.35.exe",
+        "MSIAfterburner": "http://download.msi.com/uti_exe//vga/MSIAfterburnerSetup.zip"
+    },
+    "Security": {
+        "MalwareBytes": "https://downloads.malwarebytes.com/file/mb3",
+        "HitmanPro": "https://dl.surfright.nl/HitmanPro_x64.exe",
+        "Avast": "https://install.avcdn.net/iavs9x/avast_free_antivirus_setup_online.exe",
+        "Adwcleaner": "https://toolslib.net/downloads/finish/1-adwcleaner/"
+    },
+    "Programming": {
+        "VSCode": "https://vscode-update.azurewebsites.net/latest/win32/stable",
+        "Atom": "https://atom-installer.github.com/v1.28.2/atom-windows.zip?s=1531517009&ext=.zip"
+    },
+    "Music": {
+        "Spotify": "https://download.scdn.co/SpotifySetup.exe"
+    }
+}
+
