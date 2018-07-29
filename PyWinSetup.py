@@ -60,10 +60,14 @@ def handle_err(func, err, fatal, *args, **kwargs):
         pass
 
 
-def get_files(pattern):
+def get_files(patterns):
     """ Returns all files in current folder matching a pattern. """
     files = handle_err(os.listdir, OSError, True)
-    return set(match for match in files if pattern in match)
+    matches = list()
+    for pattern in patterns:
+        matches.extend([match for match in files if pattern in match])
+
+    return matches
 
 
 def execute_file(prog):
@@ -72,7 +76,19 @@ def execute_file(prog):
     handle_err(proc.communicate, Exception, True)
 
 
-def download_file(url, name, path):
+def guess_name(url, exts):
+    """ Try to guess the name of the downloaded file. """
+    name = url.split("/")[-1].split("=")[-1]
+    for ext in exts:
+        if ext in name:
+            return name
+    
+    print(" [-] Unknown file extension: {}, from url: {}".format(name, url))
+    print(" [*] Trying to guess file extension")
+    return name.split(".")[0] + exts[0]
+
+
+def download_file(url, path, exts):
     """ Downloads file from a url with a GET request. """
     resp = requests.get(url, stream=True)
     file_size = int(resp.headers["Content-Length"])
@@ -85,9 +101,11 @@ def download_file(url, name, path):
     if first_byte >= file_size:
         return file_size
 
+    # TODO: implement a better way to get names, look if request contains it
+    name = guess_name(url, exts)
     pbar = handle_err(tqdm, Exception, False, total=file_size,
             initial=first_byte, unit="B", unit_scale=True,
-            desc=url.split("/")[-1])
+            desc=name)
 
     if not (100 < resp.status_code < 300):
         print(" [-] Error fetching content from url: {}".format(url))
@@ -104,7 +122,7 @@ def download_file(url, name, path):
     del resp
 
 
-def fetch_files(resources, path, **kwargs):
+def fetch_files(resources, path, exts, **kwargs):
     """ Fetches the urls from file or argument. """
     download = dict()
     with open(resources, "r", encoding="utf-8") as json_file:
@@ -120,23 +138,20 @@ def fetch_files(resources, path, **kwargs):
 
     for prog, url in download.items():
         print("\n [+] Downloading: {}".format(prog))
-        download_file(url,  prog + ".exe", path)
+        download_file(url, path, exts)
 
 
-def run_files():
+def run_files(exts):
     """ Fetches and runs the programs that is found. """
     handle_err(os.chdir, (OSError, FileNotFoundError), True, download_path)
 
-    progs = get_files(".exe")
+    progs = get_files(exts)
     for prog in progs:
         print(" [+] Running program: {}".format(prog))
         execute_file(prog)
 
 
 if __name__ == "__main__":
-    if not platform.startswith("win32"):
-        print(" [-] Only to be used in win32 platforms.")
-
     welcome_msg()
     parser = argparse.ArgumentParser(description="Windows Setup Script, "
             "will download and run programs specified in JSON format.")
@@ -147,13 +162,18 @@ if __name__ == "__main__":
 
     print(" [*] Running script")
 
+    if "win32" in platform:
+        download_path = r"C:\\Users\\{}\\Downloads".format(os.getlogin())
+        exts = [".dmg", ".app"]
+    elif "darwin" in platform:
+        download_path = r"/Users/{}/Downloads".format(os.getlogin())
+        exts = [".exe", ".msi"]
 
     if not args.no_download:
-        download_path = "c:\\users\\{}\\Downloads".format(os.getlogin())
         if not confirm_action("Correct path for downloads: {}".format(download_path)):
             download_path = input(" [*] Enter path to download: ")
 
-        fetch_files(args.resources, download_path, download_all=args.download_all)
+        fetch_files(args.resources, download_path, exts, download_all=args.download_all)
 
-    run_files()
+    run_files(exts)
     print(" [*] Done, hope you enjoyed the ride!")
