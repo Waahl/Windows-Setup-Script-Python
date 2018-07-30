@@ -7,8 +7,12 @@
 from subprocess import Popen, CalledProcessError
 from sys import platform
 import argparse
+import zipfile
 import json
 import os
+
+# Local Imports
+from ZipHandler import ZipFile
 
 # External Imports
 try:
@@ -26,7 +30,7 @@ except:
 
 def welcome_msg():
     """ Hello and welcome, enjoy the ride. """
-    print("""
+    print(r"""
           /\_/\\
         =( °w° )=       WINDOWS SETUP SCRIPT
           )   (  //
@@ -37,7 +41,7 @@ def welcome_msg():
 def confirm_action(msg):
     """ Prompts user for confirmation of action. """
     print(" [*] {}".format(msg))
-    prompt = input(" [*] Y/N? ".format(msg)).lower()
+    prompt = input(" [*] Y/N? ")
     if prompt in ["yes", "y"]:
         return True
     elif prompt in ["no", "n"]:
@@ -63,9 +67,9 @@ def handle_err(func, err, fatal, *args, **kwargs):
 def get_files(patterns):
     """ Returns all files in current folder matching a pattern. """
     files = handle_err(os.listdir, OSError, True)
-    matches = list()
+    matches = set()
     for pattern in patterns:
-        matches.extend([match for match in files if pattern in match])
+        matches |= set([match for match in files if pattern in match])
 
     return matches
 
@@ -86,6 +90,17 @@ def guess_name(url, exts):
     print(" [-] Unknown file extension: {}, from url: {}".format(name, url))
     print(" [*] Trying to guess file extension")
     return name.split(".")[0] + exts[0]
+
+
+def find_executable(files, exts):
+    """ Try to find an executable in a tree structure. """
+    for file_ref in files:
+        for ext in exts:
+            if ext in file_ref.filename:
+                return file_ref.filename
+
+    # no executable found
+    return None
 
 
 def download_file(url, path, exts):
@@ -141,12 +156,20 @@ def fetch_files(resources, path, exts, **kwargs):
         download_file(url, path, exts)
 
 
-def run_files(exts):
+def run_files(path, exts):
     """ Fetches and runs the programs that is found. """
     handle_err(os.chdir, (OSError, FileNotFoundError), True, download_path)
 
     progs = get_files(exts)
     for prog in progs:
+        if ".zip" in prog:
+            with ZipFile(prog, "r") as zip_ref:
+                prog = find_executable(zip_ref.infolist(), exts)
+                
+                print(" [+] Unzipping folder: {}".format(prog))
+                zip_ref.extractall(path)
+                os.chmod(prog, 0o777)
+
         print(" [+] Running program: {}".format(prog))
         execute_file(prog)
 
@@ -164,10 +187,10 @@ if __name__ == "__main__":
 
     if "win32" in platform:
         download_path = r"C:\\Users\\{}\\Downloads".format(os.getlogin())
-        exts = [".dmg", ".app"]
+        exts = [".dmg", ".app", ".zip"]
     elif "darwin" in platform:
         download_path = r"/Users/{}/Downloads".format(os.getlogin())
-        exts = [".exe", ".msi"]
+        exts = [".exe", ".msi", ".zip"]
 
     if not args.no_download:
         if not confirm_action("Correct path for downloads: {}".format(download_path)):
@@ -175,5 +198,5 @@ if __name__ == "__main__":
 
         fetch_files(args.resources, download_path, exts, download_all=args.download_all)
 
-    run_files(exts)
+    run_files(download_path, exts)
     print(" [*] Done, hope you enjoyed the ride!")
